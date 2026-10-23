@@ -21,12 +21,16 @@ npm run build    # output in dist/
 | Key | Action |
 | --- | --- |
 | `1`–`5`, `←` / `→` | Switch scene (or use the buttons, or `#astronaut`, `#farmhouse`, `#tide`, `#dunes`, `#glacier`) |
+| `C` | Cinematic camera on/off (push-ins, cranes and slides per scene, with fades between shots) |
+| `F` | Fullscreen |
 | `H` | Hide the UI |
 | `G` | Show the tuning panel (all scene parameters, "copy preset JSON") |
 | `R` | Dev only: show the reference image over the render |
 | `P` | Pointer parallax on or off |
 
-URL options: `?gui` opens the panel, `?ref` shows the reference (dev), `?still` turns parallax off, `?dpr=1` sets the pixel ratio (max 1.5).
+URL options: `?gui` opens the panel, `?ref` shows the reference (dev), `?still` turns the cinematic camera and parallax off, `?dpr=1` sets the pixel ratio (max 1.5).
+
+The HUD shows the scene title, live telemetry (camera altitude, observer distance in Schwarzschild radii, time, FPS) and an altitude ruler.
 
 ## How it works
 
@@ -42,7 +46,13 @@ URL options: `?gui` opens the panel, `?ref` shows the reference (dev), `?still` 
 
 ## Models
 
-`public/models/` holds `astronaut.glb`, `truck.glb`, `lighthouse.glb` and `trailer.glb`. They were modeled in Blender; the source is `blender/models.blend` (one collection per model). The astronaut and the truck replace procedural stand-ins and are scaled to the stand-in's height. Add `house.glb` to replace the procedural farmhouse the same way.
+`public/models/` holds `astronaut.glb`, `house.glb`, `truck.glb`, `lighthouse.glb`, `trailer.glb` and `cabin.glb`, modeled in Blender; the source is `blender/models.blend` (one collection per model). Each replaces a simple procedural stand-in once it loads, at its authored size in metres.
+
+- Farmhouse: clapboard siding, shingle rows, dormers, framed lit windows with curtains, porch with railings and steps, chimney, gutters, a dog on the porch.
+- Pickup: 1950s step-side with bulbous fenders, running boards, chrome grille and bumpers, split windshield, wooden bed.
+- Astronaut: skin-modifier body, ribbed joints, helmet with gold visor and lamps, backpack with vents, hoses, chest controls, red status LED.
+- Trailer: lofted aluminium shell with panel seams, striped awning, string lights, chairs, fire pit.
+- Cabin: snow-covered shingled A-frame, plank gable with a lit window wall, deck, stovepipe, firewood.
 
 ## Reference images
 

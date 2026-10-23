@@ -135,7 +135,7 @@ export function createDunesScene(renderer: THREE.WebGLRenderer): BlackholeScene 
   const base = new SceneBase(renderer, P);
   base.ground.mesh.visible = false;
 
-  const terrain = createTerrain(base.atmos, base.light, P.terrain, 'dunes', 2400, 640, new THREE.Vector2(0, -1100));
+  const terrain = createTerrain(base.atmos, base.light, P.terrain, 'dunes', 2400, 1000, new THREE.Vector2(0, -1100));
   base.scene.add(terrain.mesh);
 
   const env = createGradientEnv(renderer, new THREE.Color('#3a2a50'), new THREE.Color('#f0a0a0'), new THREE.Color('#5a3040'), new THREE.Color(4, 2.2, 1.4), base.bhDir);
@@ -148,7 +148,7 @@ export function createDunesScene(renderer: THREE.WebGLRenderer): BlackholeScene 
       if (mat?.emissiveIntensity) mat.emissiveIntensity *= 0.3;
     }),
   );
-  const porch = new THREE.PointLight(0xffa060, 25, 14, 2);
+  const porch = new THREE.PointLight(0xffa060, 6, 10, 2);
   porch.position.set(0, 2.4, 2.4);
   trailer.add(porch);
 
@@ -173,6 +173,11 @@ export function createDunesScene(renderer: THREE.WebGLRenderer): BlackholeScene 
     id: 'dunes',
     label: 'Dunes',
     base,
+    shots: [
+      { d: 16, from: {}, to: { x: -1.5, z: -8, yaw: 3 } },
+      { d: 14, from: { x: -1, y: -0.2, z: -6, yaw: 14, fov: -4 }, to: { x: 0, y: -0.1, z: -8, yaw: 17, fov: -5 } },
+      { d: 14, from: { y: 1 }, to: { y: 12, z: 6, pitch: -8 } },
+    ],
     params: P,
     update: (dt, time) => base.updateBase(dt, time),
     buildGui(gui: GUI) {

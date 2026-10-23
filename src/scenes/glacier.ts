@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type GUI from 'lil-gui';
 import { addParams } from '../dev/gui';
 import { SceneBase, type BasePreset } from './base';
+import { swapIn } from './models';
 import { createCabin, createPines } from './props';
 import { applyTerrain, createTerrain, type TerrainParams } from './terrain';
 import type { BlackholeScene } from './types';
@@ -160,6 +161,7 @@ export function createGlacierScene(renderer: THREE.WebGLRenderer): BlackholeScen
 
   const cabin = createCabin();
   base.scene.add(cabin);
+  swapIn(cabin, 'cabin', null, 1, 0.22);
   base.scene.add(createPines(90, 30, 160, -78, -36, 5), createPines(70, 40, 180, 22, 70, 9));
 
   const apply = () => {
@@ -175,6 +177,11 @@ export function createGlacierScene(renderer: THREE.WebGLRenderer): BlackholeScen
     id: 'glacier',
     label: 'Glacier',
     base,
+    shots: [
+      { d: 16, from: {}, to: { y: -0.8, z: -40 } },
+      { d: 14, from: { x: -2, z: -12, yaw: 14, fov: -2 }, to: { x: -1, z: -15, yaw: 18, fov: -4 } },
+      { d: 14, from: { y: 1 }, to: { y: 18, z: 10, pitch: -6 } },
+    ],
     params: P,
     update(dt, time) {
       base.updateBase(dt, time);

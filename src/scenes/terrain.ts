@@ -65,14 +65,16 @@ export function createTerrain(atmos: AtmosUniforms, light: LightUniforms, p: Ter
     uRipple: { value: p.ripple },
     uSparkle: { value: p.sparkle },
     uFlat: { value: new THREE.Vector3(p.flatX, p.flatZ, p.flatR) },
+    uClearCenter: { value: new THREE.Vector2(0, 0) }, // the base camera position (x, z)
   };
   const common = /* glsl */ `
     uniform sampler2D tNoise;
     uniform float uHeight, uScale, uClear;
     uniform vec3 uFlat;
+    uniform vec2 uClearCenter;
     ${HEIGHT_GLSL[kind]}
     float heightAt(vec2 p) {
-      float k = smoothstep(uClear, uClear * 2.5, length(p - cameraPosition.xz));
+      float k = smoothstep(uClear, uClear * 2.5, length(p - uClearCenter));
       if (uFlat.z > 0.0) k *= smoothstep(uFlat.z, uFlat.z * 2.2, length(p - uFlat.xy));
       return terrainHeight(p) * k;
     }
@@ -98,7 +100,7 @@ export function createTerrain(atmos: AtmosUniforms, light: LightUniforms, p: Ter
         gl_Position = projectionMatrix * viewMatrix * w;
       }`,
     fragmentShader: /* glsl */ `
-      uniform sampler2D tNoise;
+      ${common}
       uniform vec3 uColLow, uColHigh;
       uniform float uRim, uRipple, uSparkle;
       varying vec3 vWorld;
@@ -113,8 +115,11 @@ export function createTerrain(atmos: AtmosUniforms, light: LightUniforms, p: Ter
         return fract((p3.x + p3.y) * p3.z);
       }
       void main() {
-        vec3 N = normalize(vNormal);
         float dist = length(vWorld - cameraPosition);
+        // Per-pixel normal from the height field: smooth shading between the vertices.
+        float e = clamp(dist * 0.004, 0.25, 4.0);
+        float h0 = heightAt(vWorld.xz);
+        vec3 N = normalize(vec3(h0 - heightAt(vWorld.xz + vec2(e, 0.0)), e, h0 - heightAt(vWorld.xz + vec2(0.0, e))));
         // Fine ripples (sand) / streaks (rock), faded out with distance.
         float rf = uRipple / (1.0 + dist * 0.02);
         vec2 rg = vec2(texture2D(tNoise, vWorld.xz * vec2(0.9, 0.25)).r, texture2D(tNoise, vWorld.xz * vec2(0.25, 0.9) + 0.3).g) - 0.5;

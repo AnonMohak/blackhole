@@ -43,6 +43,26 @@ export async function addModel(parent: THREE.Object3D, name: string, envMap: THR
   return model;
 }
 
+/**
+ * Replace a stand-in's meshes with /models/<name>.glb at its authored size (metres).
+ * Lights inside the stand-in group stay. Emissive parts can be scaled for this scene.
+ */
+export async function swapIn(group: THREE.Object3D, name: string, envMap: THREE.Texture | null = null, envIntensity = 1, emissive = 1) {
+  const model = await loadOptionalModel(name);
+  if (!model) return null;
+  for (const c of [...group.children]) if (!(c as THREE.Light).isLight) group.remove(c);
+  model.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    mesh.frustumCulled = false;
+    const m = mesh.material as THREE.MeshStandardMaterial;
+    if (m.emissiveIntensity !== undefined) m.emissiveIntensity *= emissive;
+  });
+  if (envMap) applyEnv(model, envMap, envIntensity);
+  group.add(model);
+  return model;
+}
+
 /** Swap a stand-in for a loaded model with the same height and ground contact. */
 export function replaceWith(standIn: THREE.Object3D, model: THREE.Object3D, envMap: THREE.Texture | null = null) {
   if (envMap) applyEnv(model, envMap, 0.8);

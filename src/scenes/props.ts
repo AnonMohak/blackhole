@@ -161,30 +161,48 @@ export function createCabin(): THREE.Group {
   return g;
 }
 
-/** Instanced snowy pines scattered in a ring sector. */
+/** Instanced snowy pines scattered in a ring sector: jagged, drooping branch tiers with patchy snow. */
 export function createPines(count: number, rMin: number, rMax: number, aMin: number, aMax: number, seed = 5): THREE.Group {
   let s = seed;
   const rand = () => ((s = (s * 16807) % 2147483647) / 2147483647);
-  const needles = new THREE.MeshStandardMaterial({ color: 0x0e1a16, roughness: 0.9 });
+  const needles = new THREE.MeshStandardMaterial({ color: 0x0b1714, roughness: 0.95 });
   const snow = new THREE.MeshStandardMaterial({ color: 0xc8d4e2, roughness: 0.8 });
+  // A tier: a cone whose bottom rim is jagged (branch tips) and drooping.
+  const tier = (r: number, h: number, y: number, snowy: boolean) => {
+    const g = new THREE.ConeGeometry(r, h, 18, 3, true);
+    const pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const vy = pos.getY(i);
+      const t = (h / 2 - vy) / h; // 0 at the tip, 1 at the rim
+      const a = Math.atan2(pos.getZ(i), pos.getX(i));
+      const k = 1 + (t > 0.6 ? (Math.sin(a * 9 + y * 3) * 0.5 + 0.5) * 0.28 * t : 0) + (rand() - 0.5) * 0.08 * t;
+      pos.setX(i, pos.getX(i) * k);
+      pos.setZ(i, pos.getZ(i) * k);
+      pos.setY(i, vy - t * t * 0.25 * r + (snowy ? 0.06 : 0));
+    }
+    g.rotateY(rand() * Math.PI);
+    g.translate(0, y, 0);
+    g.computeVertexNormals();
+    return g;
+  };
   const tiers: THREE.BufferGeometry[] = [];
   const caps: THREE.BufferGeometry[] = [];
-  for (let i = 0; i < 4; i++) {
-    const r = 1.6 - i * 0.35;
-    const c = new THREE.ConeGeometry(r, 2.2, 8);
-    c.translate(0, 1.4 + i * 1.3, 0);
-    tiers.push(c);
-    const sc = new THREE.ConeGeometry(r * 0.75, 0.7, 8);
-    sc.translate(0, 2.2 + i * 1.3, 0);
-    caps.push(sc);
+  const N = 7;
+  for (let i = 0; i < N; i++) {
+    const r = 1.9 * (1 - i / N) + 0.2;
+    const y = 1.3 + i * 1.05;
+    tiers.push(tier(r, 1.9, y, false));
+    if (i % 2 === 0 || i === N - 1) caps.push(tier(r * 0.8, 1.2, y + 0.42, true));
   }
-  const trunk = new THREE.CylinderGeometry(0.15, 0.2, 1.2, 6);
-  trunk.translate(0, 0.6, 0);
+  const trunk = new THREE.CylinderGeometry(0.12, 0.22, 1.6, 8);
+  trunk.translate(0, 0.8, 0);
   tiers.push(trunk);
   const tree = mergeGeometries(tiers.map((g) => g.toNonIndexed()));
   const cap = mergeGeometries(caps.map((g) => g.toNonIndexed()));
   const a = new THREE.InstancedMesh(tree, needles, count);
   const b = new THREE.InstancedMesh(cap, snow, count);
+  needles.side = THREE.DoubleSide;
+  snow.side = THREE.DoubleSide;
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   for (let i = 0; i < count; i++) {

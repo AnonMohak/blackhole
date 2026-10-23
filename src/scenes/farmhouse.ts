@@ -3,7 +3,7 @@ import type GUI from 'lil-gui';
 import { addParams } from '../dev/gui';
 import { SceneBase, type BasePreset } from './base';
 import { applyWheat, createWheat, type WheatParams } from './field';
-import { createHouse, createPickup, loadOptionalModel, replaceWith } from './models';
+import { createGradientEnv, createHouse, createPickup, swapIn } from './models';
 import type { BlackholeScene } from './types';
 
 // Scene II: a lone farmhouse and a pickup in a wheat field at night. A huge black hole
@@ -32,7 +32,7 @@ const PRESET: BasePreset & { wheat: WheatParams; house: Placement; truck: Placem
     mag: 1.72,
     inner: 1.7,
     outer: 5.5,
-    falloff: 2.2,
+    falloff: 2.6,
     thinBright: 2,
     thinOpacity: 0,
     thinNA: 2,
@@ -40,20 +40,20 @@ const PRESET: BasePreset & { wheat: WheatParams; house: Placement; truck: Placem
     thinContrast: 0.6,
     farOuter: 60,
     secondary: 1,
-    volDensity: 0.9,
+    volDensity: 1.6,
     volThick: 0.18,
     volFlare: 0.9,
     volTwist: 12,
     nearFade: 1,
     volAbsorb: 0.2,
     volNA: 1,
-    volNR: 14,
+    volNR: 20,
     volContrast: 0.9,
-    colorHot: '#ffe2a8',
-    colorCool: '#c77a2e',
+    colorHot: '#fff0c8',
+    colorCool: '#c8661c',
     doppler: 0.6,
     rotSpeed: 0.8,
-    sparkle: 0.08,
+    sparkle: 0.015,
     sparkleBright: 4,
     sparkleLen: 4,
     backSky: '#050403',
@@ -119,7 +119,7 @@ const PRESET: BasePreset & { wheat: WheatParams; house: Placement; truck: Placem
     height: 0.45,
     widthScale: 1.0,
   },
-  house: { x: 17.2, z: -60.6, rotY: -0.35, scale: 1 },
+  house: { x: 17.6, z: -60.6, rotY: -0.3, scale: 0.88 },
   truck: { x: -1.3, z: -50, rotY: 0, scale: 1 },
 };
 
@@ -140,8 +140,18 @@ export function createFarmhouseScene(renderer: THREE.WebGLRenderer): BlackholeSc
   const truck = new THREE.Group();
   truck.add(createPickup());
   base.scene.add(truck);
-  loadOptionalModel('house').then((m) => m && replaceWith(house, m));
-  loadOptionalModel('truck').then((m) => m && replaceWith(truck, m));
+  const env = createGradientEnv(renderer, new THREE.Color('#0a0603'), new THREE.Color('#6a4018'), new THREE.Color('#120a04'), new THREE.Color(3, 1.8, 0.7), base.bhDir);
+  swapIn(house, 'house', env, 0.35, 0.22);
+  // Warm light from the windows and the porch onto the yard and the wheat.
+  for (const [x, y, z, i] of [
+    [-3, 2.4, 6.8, 12],
+    [3.2, 2.2, 5.2, 8],
+  ] as const) {
+    const l = new THREE.PointLight(0xff9a4a, i, 20, 2);
+    l.position.set(x, y, z);
+    house.add(l);
+  }
+  swapIn(truck, 'truck', env, 0.8);
 
   const place = (o: THREE.Object3D, p: Placement) => {
     o.position.set(p.x, 0, p.z);
@@ -159,6 +169,12 @@ export function createFarmhouseScene(renderer: THREE.WebGLRenderer): BlackholeSc
     id: 'farmhouse',
     label: 'Farmhouse',
     base,
+    shots: [
+      { d: 16, from: {}, to: { x: 2, y: -0.4, z: -14, fov: -2 } },
+      { d: 14, from: { x: 4, y: -0.8, z: -33, yaw: -13, pitch: -4 }, to: { x: 6.5, y: -0.6, z: -36, yaw: -17, pitch: -4 } },
+      { d: 12, from: { x: -8, y: -0.9, z: -30, yaw: 6 }, to: { x: -4, y: -0.9, z: -32, yaw: 2 } },
+      { d: 14, from: { y: 2 }, to: { y: 16, z: 8, pitch: -10 } },
+    ],
     update: (dt, time) => base.updateBase(dt, time),
     buildGui(gui: GUI) {
       base.baseGui(gui, apply);

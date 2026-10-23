@@ -7,6 +7,8 @@ import { createFarmhouseScene } from './scenes/farmhouse';
 import { createGlacierScene } from './scenes/glacier';
 import { createTideScene } from './scenes/tide';
 import type { BlackholeScene } from './scenes/types';
+import { Director } from './ui/director';
+import { Hud } from './ui/hud';
 
 const canvas = document.getElementById('view') as HTMLCanvasElement;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
@@ -17,12 +19,12 @@ const query = new URLSearchParams(location.search);
 const pixelRatio = Math.min(Number(query.get('dpr')) || window.devicePixelRatio, 1.5);
 
 // Scenes are built on first use (or ahead of time when the browser is idle).
-const registry: { id: string; label: string; create: (r: THREE.WebGLRenderer) => BlackholeScene }[] = [
-  { id: 'astronaut', label: 'Astronaut', create: createAstronautScene },
-  { id: 'farmhouse', label: 'Farmhouse', create: createFarmhouseScene },
-  { id: 'tide', label: 'Tide', create: createTideScene },
-  { id: 'dunes', label: 'Dunes', create: createDunesScene },
-  { id: 'glacier', label: 'Glacier', create: createGlacierScene },
+const registry: { id: string; label: string; caption: string; create: (r: THREE.WebGLRenderer) => BlackholeScene }[] = [
+  { id: 'astronaut', label: 'Astronaut', caption: 'A violet field, and the disk laid flat across the sky.', create: createAstronautScene },
+  { id: 'farmhouse', label: 'Farmhouse', caption: 'Wheat, a porch light, and a sky falling inward.', create: createFarmhouseScene },
+  { id: 'tide', label: 'Tide', caption: 'The pier ends where the light starts to bend.', create: createTideScene },
+  { id: 'dunes', label: 'Dunes', caption: 'A trailer parked at the edge of spacetime.', create: createDunesScene },
+  { id: 'glacier', label: 'Glacier', caption: 'Ice keeps a second copy of the disk.', create: createGlacierScene },
 ];
 const scenes: (BlackholeScene | undefined)[] = registry.map(() => undefined);
 const byId = (id: string) => registry.findIndex((s) => s.id === id);
@@ -78,11 +80,18 @@ function syncButtons() {
   for (const b of buttons) b.setAttribute('aria-current', String(b.dataset.scene === registry[current].id));
 }
 
+const fade = document.getElementById('fade')!;
+const director = new Director(fade);
+const hud = new Hud();
+hud.setScene(registry[current].label, registry[current].caption, ROMAN[current]);
+
 function select(index: number) {
   if (index === current || index < 0) return;
   previous = current;
   current = index;
   mix = 0;
+  director.reset();
+  hud.setScene(registry[index].label, registry[index].caption, ROMAN[index]);
   if (location.hash.slice(1) !== registry[index].id) history.replaceState(null, '', '#' + registry[index].id);
   syncButtons();
   if (gui) buildGui();
@@ -120,8 +129,23 @@ window.addEventListener('keydown', (e) => {
   else if (k === 'g') toggleGui();
   else if (k === 'r' && import.meta.env.DEV) reference.toggle();
   else if (k === 'p') parallaxOn = !parallaxOn;
+  else if (k === 'c') toggleCinematic();
+  else if (k === 'f') toggleFullscreen();
 });
 let parallaxOn = !query.has('still');
+
+function toggleCinematic() {
+  director.enabled = !director.enabled;
+  if (director.enabled) director.reset();
+}
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+director.enabled = !query.has('still');
+document.getElementById('btn-cine')!.addEventListener('click', toggleCinematic);
+document.getElementById('btn-full')!.addEventListener('click', toggleFullscreen);
+document.getElementById('btn-hide')!.addEventListener('click', () => document.body.classList.toggle('ui-hidden'));
 
 // ---------------------------------------------------------------- dev: reference overlay + GUI
 
@@ -185,7 +209,6 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-const fade = document.getElementById('fade')!;
 const timer = new THREE.Timer();
 let frames = 0;
 let fpsTime = 0;
@@ -197,6 +220,8 @@ function frame() {
   const time = timer.getElapsed();
 
   const pointerNow = parallaxOn ? pointer : new THREE.Vector2();
+  const active = getScene(current);
+  director.update(dt, active.shots, active.base.rig.offset);
   const draw = (i: number) => {
     const s = getScene(i);
     s.base.rig.setPointer(pointerNow.x, pointerNow.y);
@@ -218,9 +243,15 @@ function frame() {
 
   if (first) {
     first = false;
-    fade.classList.add('out');
     prewarm();
   }
+  hud.update(dt, {
+    alt: active.base.rig.camera.position.y,
+    horizon: active.base.P.sky.dist,
+    time,
+    fps: fps.value,
+    cinematic: director.enabled,
+  });
   frames++;
   fpsTime += dt;
   if (fpsTime > 0.5) {
@@ -245,4 +276,4 @@ function prewarm() {
 }
 
 // Debug hook for automated screenshots: window.__bh.select(i), window.__bh.scenes / get(i).
-Object.assign(window, { __bh: { select, scenes, get: getScene, renderer } });
+Object.assign(window, { __bh: { select, scenes, get: getScene, renderer, director } });

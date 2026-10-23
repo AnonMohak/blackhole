@@ -111,8 +111,8 @@ body {
 
 .keys {
   position: fixed;
-  right: 24px;
-  bottom: 18px;
+  right: 32px;
+  bottom: 30px;
   margin: 0;
   font-size: 11px;
   letter-spacing: 0.08em;
@@ -124,7 +124,8 @@ body {
 body.idle .selector,
 body.idle .keys,
 body.ui-hidden .selector,
-body.ui-hidden .keys {
+body.ui-hidden .keys,
+body.ui-hidden .hud {
   opacity: 0;
   pointer-events: none;
 }
@@ -140,4 +141,184 @@ body.idle {
 
 .lil-gui.root {
   z-index: 5;
+}
+
+/* ---------------------------------------------------------------- HUD */
+
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  color: var(--ink);
+  transition: opacity 0.6s ease;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 0 solid var(--line);
+}
+.corner.tl { top: 16px; left: 16px; border-top-width: 1px; border-left-width: 1px; }
+.corner.tr { top: 16px; right: 16px; border-top-width: 1px; border-right-width: 1px; }
+.corner.bl { bottom: 16px; left: 16px; border-bottom-width: 1px; border-left-width: 1px; }
+.corner.br { bottom: 16px; right: 16px; border-bottom-width: 1px; border-right-width: 1px; }
+
+.hud-head {
+  position: absolute;
+  top: 34px;
+  left: 40px;
+  max-width: 300px;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.hud-head.swap {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.eyebrow {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+#hud-title {
+  margin: 0;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+#hud-title::before {
+  content: attr(data-num);
+  margin-right: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  vertical-align: 0.55em;
+  color: var(--ink-dim);
+}
+#hud-caption {
+  margin: 8px 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+
+.hud-tools {
+  position: absolute;
+  top: 30px;
+  right: 36px;
+  display: flex;
+  gap: 4px;
+  pointer-events: auto;
+}
+.hud-tools button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+.hud-tools button:hover,
+.hud-tools button[aria-pressed='true'] {
+  color: var(--ink);
+  background: rgba(244, 234, 216, 0.08);
+}
+.hud-tools button:focus-visible {
+  outline: 1px solid var(--ink-dim);
+}
+.hud-tools svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hud-ruler {
+  position: absolute;
+  right: 40px;
+  top: 30%;
+  bottom: 30%;
+  width: 1px;
+  background: var(--line);
+}
+.hud-ruler .ticks span {
+  position: absolute;
+  right: 0;
+  width: 6px;
+  height: 1px;
+  background: var(--ink-dim);
+  opacity: 0.6;
+}
+.hud-ruler .ticks span.major {
+  width: 12px;
+  opacity: 1;
+}
+.hud-ruler .ticks span.major::after {
+  content: attr(data-label);
+  position: absolute;
+  right: 18px;
+  top: -6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-dim);
+}
+.hud-ruler .mark {
+  position: absolute;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  margin-bottom: -3px;
+  border: 1px solid var(--ink);
+  transform: rotate(45deg);
+  transition: bottom 0.2s linear;
+}
+.hud-ruler .mark span {
+  position: absolute;
+  right: 14px;
+  top: -5px;
+  transform: rotate(-45deg);
+  transform-origin: right center;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink);
+}
+
+.hud-tele {
+  position: absolute;
+  left: 40px;
+  bottom: 34px;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 4px 18px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+}
+.hud-tele b {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+#fade {
+  transition: opacity 0.25s linear;
+}
+#fade.out {
+  transition: opacity 1.4s ease;
 }

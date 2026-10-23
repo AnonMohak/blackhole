@@ -200,6 +200,11 @@ export function createTideScene(renderer: THREE.WebGLRenderer): BlackholeScene {
     id: 'tide',
     label: 'Tide',
     base,
+    shots: [
+      { d: 18, from: {}, to: { z: -30 } },
+      { d: 12, from: { x: 30, y: -1.2, z: -120, yaw: -12 }, to: { x: 40, y: -1.2, z: -130, yaw: -18 } },
+      { d: 14, from: { y: 3, z: 6 }, to: { y: 14, z: 10, pitch: -10 } },
+    ],
     params: P,
     update(dt, time) {
       base.updateBase(dt, time);

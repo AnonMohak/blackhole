@@ -143,7 +143,7 @@ vec3 diskColor(float r) {
 float radialProfile(float r) {
   float x = (r - uInner) / (uOuter - uInner);
   if (x < 0.0 || x > 1.0) return 0.0;
-  return smoothstep(0.0, 0.05, x) * (1.0 - smoothstep(0.5, 1.0, x)) * pow(uInner / r, uFalloff);
+  return smoothstep(0.0, 0.09, x) * (1.0 - smoothstep(0.5, 1.0, x)) * pow(uInner / r, uFalloff);
 }
 
 float dopplerFactor(vec3 p, vec3 v, float r) {
@@ -191,10 +191,12 @@ void volumeSample(vec3 p, vec3 v, float dt, inout vec3 col, inout float T) {
   float vert = exp(-y * y);
   vec2 pu = polarUV(p, r);
   float sv = pu.y * uVolNR + pu.x * uVolTwist;
-  float n1 = textureLod(tNoise, vec2(pu.x * uVolNA, sv + y * 0.08), 0.0).r;
-  float n2 = textureLod(tNoise, vec2(pu.x * uVolNA * 2.0 + 0.5, sv * 2.1 - y * 0.12), 0.0).g;
-  float n = smoothstep(0.25, 0.9, n1 * 0.55 + n2 * 0.45);
-  float dens = prof * vert * mix(1.0, n * n * 3.0, uVolContrast);
+  // One mip softer than full detail: fine strands without moire.
+  float n1 = textureLod(tNoise, vec2(pu.x * uVolNA, sv + y * 0.08), 1.0).r;
+  float n2 = textureLod(tNoise, vec2(pu.x * uVolNA * 2.0 + 0.5, sv * 2.1 - y * 0.12), 1.0).g;
+  // Strands: a power curve leaves dark gaps between bright filaments.
+  float n = smoothstep(0.2, 0.95, n1 * 0.6 + n2 * 0.4);
+  float dens = prof * vert * mix(1.0, pow(n, 2.4) * 3.6, uVolContrast);
 
   // Fade the near side so the shadow stays clean (the reference keeps it hidden).
   float toObs = dot(p.xz / r, uObsDir);

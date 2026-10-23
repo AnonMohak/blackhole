@@ -3,7 +3,7 @@ import type GUI from 'lil-gui';
 import { addParams } from '../dev/gui';
 import { SceneBase, type BasePreset } from './base';
 import { applyFlowers, createFlowers, type FlowerParams } from './field';
-import { createAstronaut, createGradientEnv, loadOptionalModel, replaceWith } from './models';
+import { createAstronaut, createGradientEnv, swapIn } from './models';
 import type { BlackholeScene } from './types';
 
 // Scene I: an astronaut sits in a violet flower field. The black hole lies on the
@@ -134,7 +134,7 @@ const PRESET: BasePreset & {
     sparkleColor: '#ffffff',
     height: 1.0,
   },
-  astronaut: { x: 0.3, y: 0.03, z: -5.0, rotY: 0.2, scale: 1.05 },
+  astronaut: { x: 0.3, y: 0.0, z: -5.0, rotY: 1.2, scale: 1.0 },
 };
 
 export function createAstronautScene(renderer: THREE.WebGLRenderer): BlackholeScene {
@@ -161,7 +161,13 @@ export function createAstronautScene(renderer: THREE.WebGLRenderer): BlackholeSc
   const astro = new THREE.Group();
   astro.add(createAstronaut(env));
   base.scene.add(astro);
-  loadOptionalModel('astronaut').then((m) => m && replaceWith(astro, m, env));
+  swapIn(astro, 'astronaut', env, 0.45, 0.12).then((m) =>
+    // Backlit by the disk: keep the suit a mid grey, as in the reference.
+    m?.traverse((o) => {
+      const mat = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+      if (mat?.name.startsWith('A_Fabric') || mat?.name.startsWith('A_Shell')) mat.color.multiplyScalar(0.55);
+    }),
+  );
 
   const apply = () => {
     applyFlowers(flowers.uniforms, P.flowers);
@@ -178,7 +184,21 @@ export function createAstronautScene(renderer: THREE.WebGLRenderer): BlackholeSc
     id: 'astronaut',
     label: 'Astronaut',
     base,
-    update: (dt, time) => base.updateBase(dt, time),
+    shots: [
+      { d: 16, from: {}, to: { z: -1.6, y: -0.12, fov: -2 } },
+      { d: 14, from: { x: -2, z: -1, yaw: -6 }, to: { x: 2, z: -1.4, yaw: 6 } },
+      { d: 12, from: { x: 0.05, y: -0.05, z: -2.4, fov: -4 }, to: { x: 0.25, y: -0.02, z: -2.8, fov: -5 } },
+      { d: 14, from: { y: 0.3 }, to: { y: 6, z: 1.5, pitch: -9 } },
+    ],
+    update(dt, time) {
+      base.updateBase(dt, time);
+      // Autofocus on the astronaut as the camera moves.
+      const d = base.rig.camera.position.distanceTo(astro.position.clone().setY(0.8));
+      if (Math.abs(d - P.post.focus) > 0.01) {
+        P.post.focus = d;
+        base.post.applyParams();
+      }
+    },
     buildGui(gui: GUI) {
       base.baseGui(gui, apply);
       addParams(gui.addFolder('Flowers').close(), P.flowers, apply, { sparkleRate: [0, 0.2, 0.001] });

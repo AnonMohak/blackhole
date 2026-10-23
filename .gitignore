@@ -2,3 +2,5 @@ node_modules
 dist
 # Reference images are third-party art: keep them local only.
 ref/
+# Blender auto-backups
+*.blend1

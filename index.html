@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Event Horizon</title>
+    <meta name="description" content="Two real-time black hole scenes in three.js." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2215%22 fill=%22%23f4ead8%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%229%22 fill=%22%23000%22/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="view"></canvas>
+    <img id="ref" alt="" hidden />
+    <div id="fade"></div>
+    <nav class="selector" aria-label="Scene"></nav>
+    <p class="keys">1–5 switch &nbsp;·&nbsp; H hide &nbsp;·&nbsp; G tune</p>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
